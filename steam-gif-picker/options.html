@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Steam GIF Picker 设置</title>
+  <link rel="icon" href="icons/icon32.png">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <img class="mark" src="icons/icon128.png" alt="Steam GIF Picker">
+      <div>
+        <h1>Steam GIF Picker</h1>
+        <p>扩展设置</p>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2>GIF 数据源</h2>
+      <label for="provider">数据源</label><select id="provider"><option value="gifsnap">GifSnap（无需 Key）</option><option value="giphy">GIPHY（API Key）</option></select>
+      <p class="muted" id="gifsnapNote" hidden>无需 Key。公共服务不保证可用；无 GIPHY 内容分级。</p>
+      <div id="originalLinkFields" hidden><label for="gifLinkLimitMB">GIF 链接体积阈值（实验）</label><select id="gifLinkLimitMB"><option value="0.5">0.5 MB</option><option value="1">1 MB</option><option value="1.5">1.5 MB</option><option value="2">2 MB</option><option value="2.5">2.5 MB</option><option value="3">3 MB</option><option value="4">4 MB</option><option value="6">6 MB</option><option value="8">8 MB</option></select><p class="muted">默认 2 MB（2,000,000 字节），不是 Steam 官方限制。右键仍可仅本次作为图片文件发送。</p></div>
+      <div id="giphyFields">
+      <p class="muted">配置自己的 GIPHY API Key 后，才能加载真实热门 GIF 和搜索结果。没有 Key 时，扩展会以演示数据运行，演示数据不会发送到 Steam。</p>
+      <label for="apiKey">API Key</label>
+      <input id="apiKey" type="password" autocomplete="off" placeholder="粘贴你的 GIPHY API Key">
+      <div class="row">
+        <label for="rating">内容分级</label>
+        <select id="rating">
+          <option value="g">G</option>
+          <option value="pg">PG</option>
+          <option value="pg-13" selected>PG-13</option>
+          <option value="r">R</option>
+        </select>
+      </div>
+      <a id="registerApi" href="https://developers.giphy.com/dashboard/" target="_blank" rel="noopener noreferrer">申请 API Key ↗</a> <a href="#" id="apiGuideHelp" style="margin-left:14px">查看申请教程</a>
+      </div>
+      <button id="save">保存设置</button>
+      <button type="button" id="checkNetwork" style="background:#36404d;margin-left:8px">检测网络连接</button>
+      <p class="muted" id="networkStatus" role="status" aria-live="polite">分别检测 API 和图片 CDN（使用已保存的数据源）。</p>
+      <p id="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card">
+      <h2>Steam 自动发送说明</h2>
+      <ul>
+        <li>打开目标好友聊天后，扩展会自动识别当前可见的聊天输入框，无需先点击输入框。</li>
+        <li>扩展只在检测到唯一、可见的聊天输入框时尝试发送；多个输入框无法明确区分时会停止，不会猜测好友。</li>
+        <li>自动发送依赖 Steam 当前版本的聊天 DOM 和事件处理，必须在你的客户端实测。发送状态无法确认时，扩展不会自动重试。</li>
+        <li>若原生输入框中有未发送草稿，扩展会尝试临时替换发送 GIF 链接，并在检测到发送后恢复草稿；无法确认时会报告状态未知。</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>隐私</h2>
+      <p class="muted">收藏、搜索历史和界面位置保存在本地扩展存储中。搜索关键词和 GIF 请求会发送给当前选择的数据源（GIPHY 或 GifSnap）及其媒体 CDN。扩展不会主动读取 Steam 登录凭证、好友列表或聊天记录。</p>
+    </section>
+  </main>
+  <script src="api-guide.js"></script>
+  <script src="network-ui.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

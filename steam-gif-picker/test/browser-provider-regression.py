@@ -1,0 +1,23 @@
+"""Synthetic Steam chat; fixture APIs, no real GIF requests or accounts."""
+from pathlib import Path
+import os,base64
+from playwright.sync_api import sync_playwright,expect
+ROOT=Path(__file__).resolve().parents[1]
+HTML='''<div class="friendsui-container" data-conversation-id="fixture"><form><textarea aria-label="聊天消息" style="width:400px;height:70px"></textarea><button type="submit" aria-label="发送消息">发送</button></form></div><script>window.sent=[];const e=document.querySelector('textarea');document.querySelector('button').onclick=()=>{sent.push(e.value);e.value=''};document.querySelector('form').onsubmit=ev=>{ev.preventDefault();sent.push(e.value);e.value=''}</script>'''
+STUB='''window.local={sgpFavorites:[{id:'old',title:'Old GIPHY',source:'giphy',sendUrl:'https://giphy.com/gifs/old',previewUrl:'https://media.giphy.com/old.gif'}]};window.calls=[];window.chrome={storage:{local:{get:(k,cb)=>cb(local),set:(v,cb)=>{Object.assign(local,v);cb?.()}},onChanged:{addListener(){}}},runtime:{sendMessage:(m,cb)=>{calls.push({...m});const snap=m.type==='SGP_GIFSNAP_FETCH';const items=Array.from({length:m.limit===1?1:12},(_,i)=>({id:(snap?'gifsnap:':'')+`${m.query||'hot'}-${m.offset+i}`,title:`Fixture ${i}`,source:snap?'gifsnap':'giphy',sendUrl:snap?`https://cdn.example.com/${m.query||'hot'}-${m.offset+i}.gif`:`https://giphy.com/gifs/${m.query||'hot'}-${m.offset+i}`,previewUrl:'https://cdn.example.com/preview.gif'}));const result={ok:true,items,hasMore:m.offset===0&&m.limit!==1,count:items.length,...(snap?{nextOffset:m.offset+25}:{})};if(m.query==='slow')setTimeout(()=>cb(result),1800);else cb(result)}}};'''
+with sync_playwright() as p:
+    browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM','/usr/lib/chromium/chromium'),headless=True,args=['--no-sandbox','--disable-dev-shm-usage'])
+    page=browser.new_page(viewport={'width':900,'height':700}); errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+    pixel=base64.b64decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')
+    page.route('**/*',lambda route:route.fulfill(status=200,content_type='image/gif',body=pixel));page.set_content(HTML);page.evaluate(STUB)
+    for name in ['api-guide.js','network-ui.js']:page.add_script_tag(path=str(ROOT/name))
+    page.add_script_tag(content=(ROOT/'content.js').read_text().replace('const HOST = location.hostname;',"const HOST = 'steamloopback.host';",1))
+    base=page.locator('#steam-gif-picker-host');ball=base.locator('#ball');track=base.locator('#track');search=base.locator('#search');settings=base.locator('#settingsBtn');selector=base.locator('#provider')
+    ball.wait_for(state='visible');page.wait_for_timeout(500);assert not base.locator('#settings').is_visible();assert page.evaluate('calls.length')==0
+    ball.click();expect(track.locator('.card-main')).to_have_count(12);expect(base.locator('#branding')).to_have_text('POWERED BY GIFSNAP');assert page.evaluate('calls[0].type')=='SGP_GIFSNAP_FETCH'
+    track.evaluate('e=>e.scrollLeft=e.scrollWidth-e.clientWidth');expect(track.locator('.card-main')).to_have_count(24);assert page.evaluate('calls.some(x=>x.offset===25)')
+    search.fill('cat');page.wait_for_timeout(1250);expect(track.locator('[data-gif-id="gifsnap:cat-0"]')).to_be_visible();track.locator('[data-gif-id="gifsnap:cat-0"] .star').click();base.locator('#favoritesBtn').click();expect(track.locator('.card-main')).to_have_count(1);expect(track.locator('[data-gif-id="gifsnap:cat-0"]')).to_be_visible();assert page.evaluate('local.sgpFavorites.length')==2
+    track.locator('.card-main').click();page.wait_for_function('sent.length===1');assert page.evaluate('sent')==['https://cdn.example.com/cat-0.gif'];page.wait_for_timeout(900)
+    ball.click();base.locator('#favoritesBtn').click();settings.click();expect(selector).to_have_value('gifsnap');expect(base.locator('#giphyFields')).to_be_hidden();base.locator('#checkNetwork').click();expect(base.locator('#networkStatus')).to_contain_text('图片 CDN：正常');assert page.evaluate('calls.at(-1).type')=='SGP_GIFSNAP_FETCH'
+    selector.select_option('giphy');expect(base.locator('#giphyFields')).to_be_visible();base.locator('#apiKey').fill('fixture-key');base.locator('#saveSettings').click();expect(base.locator('#branding')).to_have_text('POWERED BY GIPHY');expect(track.locator('[data-gif-id="cat-0"]')).to_be_visible();assert page.evaluate('local.sgpProvider')=='giphy';base.locator('#favoritesBtn').click();expect(track.locator('[data-gif-id="old"]')).to_be_visible();expect(track.locator('.card-main')).to_have_count(1)
+    assert not errors,errors;browser.close();print('PASS default keyless embedded search, page cursor, favorites isolation, single send, connection probe and persisted source switching')

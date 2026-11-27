@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Steam GIF Picker - 本地聊天测试页</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #15191f; color: #e8edf4; font: 14px system-ui, sans-serif; }
+    .app { width: min(760px, calc(100% - 32px)); margin: 36px auto; background: #202630; border: 1px solid #343d49; border-radius: 16px; overflow: hidden; }
+    header { padding: 18px 20px; border-bottom: 1px solid #39424e; display: flex; justify-content: space-between; align-items: center; }
+    header strong { color: #a6d783; }
+    .tip { padding: 12px 20px; color: #aeb8c5; background: #252e3a; line-height: 1.6; }
+    #messages { min-height: 260px; max-height: 420px; overflow: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+    .msg { align-self: flex-end; max-width: 80%; background: #304253; padding: 10px 12px; border-radius: 12px 12px 3px 12px; overflow-wrap: anywhere; }
+    .msg a { color: #9fd0ff; }
+    form { display: flex; gap: 10px; padding: 14px; border-top: 1px solid #39424e; }
+    textarea { flex: 1; resize: vertical; min-height: 46px; max-height: 130px; border: 1px solid #465160; border-radius: 10px; background: #151a21; color: white; padding: 12px; font: inherit; }
+    button { border: 0; border-radius: 10px; padding: 0 18px; background: #397fca; color: white; font-weight: 700; cursor: pointer; }
+    .note { padding: 0 20px 18px; color: #8794a4; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <main class="app" data-conversation-id="mock-conversation-001">
+    <header><strong>本地模拟聊天对象：测试好友</strong><span>在线</span></header>
+    <div class="tip">这是本地测试页面，不连接 Steam。扩展会自动识别下面的聊天输入框，无需先点击输入框；然后点击右侧 GIF 悬浮球。无 GIPHY API Key 时可以测试面板、收藏、历史和模拟发送流程。</div>
+    <section id="messages" aria-live="polite">
+      <div class="msg">你好！这是 Steam GIF Picker 的本地测试环境。</div>
+    </section>
+    <form id="chatForm">
+      <textarea id="chatInput" placeholder="输入消息……" aria-label="聊天消息"></textarea>
+      <button type="submit" aria-label="发送消息">发送</button>
+    </form>
+    <p class="note">注意：本地演示卡片发送的是 example.com 测试链接，不是真实 GIF。真实 GIF 搜索与发送需要配置 GIPHY API Key，并在 Steam 客户端中单独验证。</p>
+  </main>
+  <script>
+    const form = document.getElementById('chatForm');
+    const input = document.getElementById('chatInput');
+    const messages = document.getElementById('messages');
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      const bubble = document.createElement('div');
+      bubble.className = 'msg';
+      if (/^https:\/\//i.test(text)) {
+        const link = document.createElement('a');
+        link.href = text;
+        link.textContent = text;
+        link.target = '_blank';
+        link.rel = 'noreferrer';
+        bubble.appendChild(link);
+      } else {
+        bubble.textContent = text;
+      }
+      messages.appendChild(bubble);
+      input.value = '';
+      messages.scrollTop = messages.scrollHeight;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "Steam GIF Picker",
+  "version": "0.1.29",
+  "description": "Steam GIF Picker: GIF search, favorites, wheel browsing and single-trigger sending.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://api.giphy.com/*",
+    "https://giphy.com/*",
+    "https://*.giphy.com/*",
+    "https://steamloopback.host/*",
+    "https://*.steamloopback.host/*",
+    "https://steam-chat.com/*",
+    "https://*.steam-chat.com/*",
+    "https://gifsnap.com/*",
+    "https://media.gifsnap.com/*",
+    "https://static.klipy.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://steamloopback.host/*",
+        "https://*.steamloopback.host/*",
+        "https://steam-chat.com/*",
+        "https://*.steam-chat.com/*"
+      ],
+      "js": [
+        "api-guide.js",
+        "network-ui.js",
+        "content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true,
+      "match_about_blank": true,
+      "match_origin_as_fallback": true
+    }
+  ],
+  "options_page": "options.html",
+  "action": {
+    "default_title": "Steam GIF Picker",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
